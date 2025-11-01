@@ -17,9 +17,11 @@ app.post("/submit-job", async (req, res) => {
     console.log("Description: %O", description);
     console.log("Acceptance criteria: %O", acceptanceCriteria);
     const erc8004Client = ERC8004Service.getInstance().getClient();
-    const agentID = BigInt(process.env.FREELANCER_AGENT_ID!);
+    const agentID = BigInt(process.env.ERC8004_AGENT_ID!);
     const clientAddress = process.env.FREELANCER_CLIENT_ADDRESS!;
     const lastIndex = await erc8004Client.reputation.getLastIndex(agentID, clientAddress);
+    console.log("Agent ID: %O", agentID);
+    console.log("Client address: %O", clientAddress);
     console.log("Last index: %O", lastIndex);
     const feedbackAuth = await erc8004Client.reputation.createFeedbackAuth(
       agentID,

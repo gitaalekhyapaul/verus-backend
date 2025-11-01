@@ -19,6 +19,8 @@ app.post("/accept-job", async (req, res) => {
     const agentID = BigInt(process.env.SPONSOR_AGENT_ID!);
     const clientAddress = process.env.SPONSOR_CLIENT_ADDRESS!;
     const lastIndex = await erc8004Client.reputation.getLastIndex(agentID, clientAddress);
+    console.log("Agent ID: %O", agentID);
+    console.log("Client address: %O", clientAddress);
     console.log("Last index: %O", lastIndex);
     const feedbackAuth = await erc8004Client.reputation.createFeedbackAuth(
       agentID,
@@ -77,6 +79,36 @@ app.post("/deliver-job", async (req, res) => {
     });
     console.log(response.data);
     res.json(response.data);
+  } catch (error) {
+    if (error instanceof AxiosError) {
+      console.error("Error: %O", error.response?.data);
+      return res.status(error.response?.status || 500).json({ error: error.response?.data });
+    }
+    console.error("Error: %O", error);
+    res.status(500).json({ error: "Internal server error" });
+  }
+});
+
+app.post("/sponsor-feedback", async (req, res) => {
+  try {
+    const { feedbackAuth } = req.body;
+    const erc8004Client = ERC8004Service.getInstance().getClient();
+    const agentID = BigInt(process.env.SPONSOR_AGENT_ID!);
+    const clientAddress = process.env.HEDERA_ACCOUNT_EVM_ADDRESS!;
+    const lastIndex = await erc8004Client.reputation.getLastIndex(agentID, clientAddress);
+    console.log("Agent ID: %O", agentID);
+    console.log("Client address: %O", clientAddress);
+    console.log("Last index: %O", lastIndex);
+    console.log("Feedback auth: %O", feedbackAuth);
+    const { txHash } = await erc8004Client.reputation.giveFeedback({
+      agentId: agentID,
+      score: 67,
+      tag1: "decent-specification",
+      tag2: "no-feature-creeping",
+      feedbackAuth,
+    });
+    console.log("Tx Hash for sponsor feedback: %O", txHash);
+    res.json({ txHash });
   } catch (error) {
     if (error instanceof AxiosError) {
       console.error("Error: %O", error.response?.data);
