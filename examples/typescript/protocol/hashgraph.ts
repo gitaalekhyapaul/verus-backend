@@ -105,7 +105,7 @@ export class HashgraphService {
    * @param fileID - The file ID of the agent card.
    * @returns The agent card for the Verus Protocol Agent.
    */
-  public async getAgentCard(fileID: FileId) {
+  public async getAgentCard(fileID: FileId | string) {
     const client = this.getClient();
     const query = new FileContentsQuery().setFileId(fileID);
     const file = await query.execute(client);
