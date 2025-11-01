@@ -16,7 +16,7 @@ app.post("/accept-job", async (req, res) => {
     const { jobID } = req.body;
     console.log("Job ID: %O", jobID);
     const erc8004Client = ERC8004Service.getInstance().getClient();
-    const agentID = BigInt(process.env.SPONSOR_AGENT_ID!);
+    const agentID = BigInt(process.env.ERC8004_AGENT_ID!);
     const clientAddress = process.env.SPONSOR_CLIENT_ADDRESS!;
     const lastIndex = await erc8004Client.reputation.getLastIndex(agentID, clientAddress);
     console.log("Agent ID: %O", agentID);
@@ -102,7 +102,7 @@ app.post("/sponsor-feedback", async (req, res) => {
     console.log("Feedback auth: %O", feedbackAuth);
     const { txHash } = await erc8004Client.reputation.giveFeedback({
       agentId: agentID,
-      score: 67,
+      score: Math.floor(Math.random() * 25) + 75,
       tag1: "decent-specification",
       tag2: "no-feature-creeping",
       feedbackAuth,
@@ -122,10 +122,10 @@ app.post("/sponsor-feedback", async (req, res) => {
         job,
         feedback: {
           txHash,
-          score: 67,
+          score: Math.floor(Math.random() * 25) + 75,
           tag1: "decent-specification",
           tag2: "no-feature-creeping",
-          agentId: agentID,
+          agentId: agentID.toString(),
           feedbackAuth,
         },
       }),

@@ -92,6 +92,58 @@ app.post("/submit-job", async (req, res) => {
   }
 });
 
+app.post("/freelancer-feedback", async (req, res) => {
+  try {
+    const { feedbackAuth, jobID } = req.body;
+    const erc8004Client = ERC8004Service.getInstance().getClient();
+    const agentID = BigInt(process.env.FREELANCER_AGENT_ID!);
+    const clientAddress = process.env.HEDERA_ACCOUNT_EVM_ADDRESS!;
+    const lastIndex = await erc8004Client.reputation.getLastIndex(agentID, clientAddress);
+    console.log("Agent ID: %O", agentID);
+    console.log("Client address: %O", clientAddress);
+    console.log("Last index: %O", lastIndex);
+    console.log("Feedback auth: %O", feedbackAuth);
+    const { txHash } = await erc8004Client.reputation.giveFeedback({
+      agentId: agentID,
+      score: Math.floor(Math.random() * 25) + 75,
+      tag1: "excellent-service",
+      tag2: "fast-response",
+      feedbackAuth,
+    });
+    console.log("Tx Hash for sponsor feedback: %O", txHash);
+    const supabaseService = SupabaseService.getInstance().getClient();
+    const hashgraphService = HashgraphService.getInstance();
+    const { data, error } = await supabaseService.from("jobs").select().eq("id", jobID);
+    if (error) {
+      throw new Error(error.message);
+    }
+    const job = data[0];
+    console.log("Job: %O", job);
+    await hashgraphService.sendMessageToTopic(
+      job.topic_id,
+      JSON.stringify({
+        job,
+        feedback: {
+          txHash,
+          score: Math.floor(Math.random() * 25) + 75,
+          tag1: "excellent-service",
+          tag2: "fast-response",
+          agentId: agentID.toString(),
+          feedbackAuth,
+        },
+      }),
+    );
+    res.json({ txHash });
+  } catch (error) {
+    if (error instanceof AxiosError) {
+      console.error("Error: %O", error.response?.data);
+      return res.status(error.response?.status || 500).json({ error: error.response?.data });
+    }
+    console.error("Error: %O", error);
+    res.status(500).json({ error: "Internal server error" });
+  }
+});
+
 app.listen(process.env.PORT || 3000, async () => {
   console.log(`[Sponsor] Server is running on port ${process.env.PORT || 3000}`);
   const hashgraphService = await HashgraphService.getInstance();
