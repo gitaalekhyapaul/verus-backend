@@ -531,6 +531,9 @@ importers:
 
   clients/sponsor:
     dependencies:
+      '@supabase/supabase-js':
+        specifier: ^2.78.0
+        version: 2.78.0(bufferutil@4.0.9)(utf-8-validate@5.0.10)
       axios:
         specifier: ^1.7.9
         version: 1.11.0(debug@4.4.1)

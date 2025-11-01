@@ -215,7 +215,14 @@ app.post("/submit-job", async (req: Request, res: Response) => {
     }
     const job = data[0];
     console.log("Job created: %O", job);
-    await hashgraphService.sendMessageToTopic(jobTopicID, JSON.stringify(job));
+    await hashgraphService.sendMessageToTopic(
+      jobTopicID,
+      JSON.stringify({
+        ...job,
+        freelancer_feedback_auth: undefined,
+        sponsor_feedback_auth: undefined,
+      }),
+    );
     res.json({
       jobID: job.id,
     });
@@ -256,7 +263,8 @@ app.post("/accept-job", async (req: Request, res: Response) => {
         ...job,
         status: "accepted",
         freelancer_address: walletAddress,
-        freelancer_feedback_auth: feedbackAuth,
+        freelancer_feedback_auth: undefined,
+        sponsor_feedback_auth: undefined,
       }),
     );
     res.json({
@@ -318,6 +326,8 @@ app.post("/deliver-job", async (req, res) => {
           job: {
             ...job,
             status: "completed",
+            freelancer_feedback_auth: undefined,
+            sponsor_feedback_auth: undefined,
           },
           paymentResponse,
         }),

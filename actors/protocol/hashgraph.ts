@@ -169,7 +169,9 @@ export class HashgraphService {
     const tx = await new TopicMessageSubmitTransaction({
       topicId: topicID,
       message: message,
-    }).execute(client);
+    })
+      .setChunkSize(4096)
+      .execute(client);
     const receipt = await tx.getReceipt(client);
     console.log("Message sent to topic: %O", receipt);
     return `${topicID}/${receipt.topicSequenceNumber?.toString() || "1"}`;

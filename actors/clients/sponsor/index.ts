@@ -4,6 +4,7 @@ import { withPaymentInterceptor, decodeXPaymentResponse, createSigner, type Hex 
 import express from "express";
 import { ERC8004Service } from "./8004";
 import { HashgraphService } from "./hashgraph";
+import { SupabaseService } from "./supabase";
 const app = express();
 
 config();
@@ -48,6 +49,36 @@ app.post("/submit-job", async (req, res) => {
     console.log(response.data);
     const paymentResponse = decodeXPaymentResponse(response.headers["x-payment-response"]);
     console.log(paymentResponse);
+    const jobID = response.data.jobID;
+    const supabaseService = SupabaseService.getInstance().getClient();
+    const hashgraphService = HashgraphService.getInstance();
+    const { data, error } = await supabaseService.from("jobs").select().eq("id", jobID);
+    if (error) {
+      throw new Error(error.message);
+    }
+    const job = data[0];
+    console.log("Job: %O", job);
+    const { error: updateError } = await supabaseService
+      .from("jobs")
+      .update({
+        status: "payment-escrowed",
+      })
+      .eq("id", jobID);
+    if (updateError) {
+      throw new Error(updateError.message);
+    }
+    await hashgraphService.sendMessageToTopic(
+      job.topic_id,
+      JSON.stringify({
+        job: {
+          ...job,
+          status: "payment-escrowed",
+          freelancer_feedback_auth: undefined,
+          sponsor_feedback_auth: undefined,
+        },
+        paymentResponse,
+      }),
+    );
     res.json({ ...response.data, paymentResponse });
   } catch (error) {
     if (error instanceof AxiosError) {
