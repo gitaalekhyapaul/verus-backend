@@ -145,6 +145,19 @@ app.post("/freelancer-feedback", async (req, res) => {
   }
 });
 
+app.get("/reputation", async (req, res) => {
+  try {
+    const erc8004Client = await ERC8004Service.getInstance().getClient();
+    const summary = await erc8004Client.reputation.getSummary(
+      BigInt(process.env.ERC8004_AGENT_ID!),
+    );
+    res.json({ ...summary, count: summary.count.toString() });
+  } catch (error) {
+    console.error("Error: %O", error);
+    res.status(500).json({ error: "Internal server error" });
+  }
+});
+
 app.listen(process.env.PORT || 3000, async () => {
   console.log(`[Sponsor] Server is running on port ${process.env.PORT || 3000}`);
   const hashgraphService = await HashgraphService.getInstance();
