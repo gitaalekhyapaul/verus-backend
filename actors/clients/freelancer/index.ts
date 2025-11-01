@@ -91,7 +91,7 @@ app.post("/deliver-job", async (req, res) => {
 
 app.post("/sponsor-feedback", async (req, res) => {
   try {
-    const { feedbackAuth } = req.body;
+    const { feedbackAuth, jobID } = req.body;
     const erc8004Client = ERC8004Service.getInstance().getClient();
     const agentID = BigInt(process.env.SPONSOR_AGENT_ID!);
     const clientAddress = process.env.HEDERA_ACCOUNT_EVM_ADDRESS!;
@@ -108,6 +108,28 @@ app.post("/sponsor-feedback", async (req, res) => {
       feedbackAuth,
     });
     console.log("Tx Hash for sponsor feedback: %O", txHash);
+    const supabaseService = SupabaseService.getInstance().getClient();
+    const hashgraphService = HashgraphService.getInstance();
+    const { data, error } = await supabaseService.from("jobs").select().eq("id", jobID);
+    if (error) {
+      throw new Error(error.message);
+    }
+    const job = data[0];
+    console.log("Job: %O", job);
+    await hashgraphService.sendMessageToTopic(
+      job.topic_id,
+      JSON.stringify({
+        job,
+        feedback: {
+          txHash,
+          score: 67,
+          tag1: "decent-specification",
+          tag2: "no-feature-creeping",
+          agentId: agentID,
+          feedbackAuth,
+        },
+      }),
+    );
     res.json({ txHash });
   } catch (error) {
     if (error instanceof AxiosError) {
