@@ -1,0 +1,63 @@
+import axios, { AxiosError } from "axios";
+import { config } from "dotenv";
+import { withPaymentInterceptor, decodeXPaymentResponse, createSigner, type Hex } from "x402-axios";
+import express from "express";
+import { ERC8004Service } from "./8004";
+const app = express();
+
+config();
+
+app.use(express.json());
+
+app.post("/submit-job", async (req, res) => {
+  try {
+    const { description, acceptanceCriteria } = req.body;
+    console.log("Description: %O", description);
+    console.log("Acceptance criteria: %O", acceptanceCriteria);
+    const erc8004Client = ERC8004Service.getInstance().getClient();
+    const agentID = BigInt(process.env.FACILITATOR_AGENT_ID!);
+    const clientAddress = process.env.FACILITATOR_CLIENT_ADDRESS!;
+    const lastIndex = await erc8004Client.reputation.getLastIndex(agentID, clientAddress);
+    console.log("Last index: %O", lastIndex);
+    const feedbackAuth = await erc8004Client.reputation.createFeedbackAuth(
+      agentID,
+      clientAddress,
+      lastIndex + BigInt(1),
+      BigInt(Math.floor(Date.now() / 1000) + 3600 * 24 * 365), // Valid for 1 year
+      BigInt(await erc8004Client.getChainId()),
+      process.env.HEDERA_ACCOUNT_EVM_ADDRESS!,
+    );
+    console.log("Feedback auth: %O", feedbackAuth);
+    const signedFeedbackAuth = await erc8004Client.reputation.signFeedbackAuth(feedbackAuth);
+    console.log("Signed feedback auth: %O", signedFeedbackAuth);
+    const privateKey = process.env.HEDERA_PRIVATE_KEY as Hex | string;
+    const hederaAccountId = process.env.HEDERA_ACCOUNT_ID as string;
+    const signer = await createSigner("hedera-testnet", privateKey, { accountId: hederaAccountId });
+    const api = withPaymentInterceptor(
+      axios.create({
+        baseURL: process.env.FACILITATOR_SERVER_URL as string,
+      }),
+      signer,
+    );
+    const response = await api.post("/submit-job", {
+      description,
+      acceptanceCriteria,
+      feedbackAuth: signedFeedbackAuth,
+    });
+    console.log(response.data);
+    const paymentResponse = decodeXPaymentResponse(response.headers["x-payment-response"]);
+    console.log(paymentResponse);
+    res.json({ ...response.data, paymentResponse });
+  } catch (error) {
+    if (error instanceof AxiosError) {
+      console.error("Error: %O", error.response?.data);
+      return res.status(error.response?.status || 500).json({ error: error.response?.data });
+    }
+    console.error("Error: %O", error);
+    res.status(500).json({ error: "Internal server error" });
+  }
+});
+
+app.listen(process.env.PORT || 3000, () => {
+  console.log(`[Sponsor] Server is running on port ${process.env.PORT || 3000}`);
+});
