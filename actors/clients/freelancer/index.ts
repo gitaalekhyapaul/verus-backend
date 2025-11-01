@@ -121,6 +121,7 @@ app.post("/sponsor-feedback", async (req, res) => {
       JSON.stringify({
         job,
         feedback: {
+          recipient: "sponsor",
           txHash,
           score: Math.floor(Math.random() * 25) + 75,
           tag1: "decent-specification",

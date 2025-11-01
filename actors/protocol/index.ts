@@ -333,7 +333,30 @@ app.post("/deliver-job", async (req, res) => {
         }),
       );
     }
-    res.json({ ...response.data, paymentResponse });
+    const { data: sponsorFeedbackResponse } = await axios.post(
+      `${process.env.FREELANCER_SERVER_URL}/sponsor-feedback`,
+      {
+        feedbackAuth: job.sponsor_feedback_auth,
+        jobID,
+      },
+    );
+    console.log("Sponsor feedback response: %O", sponsorFeedbackResponse);
+    const { data: freelancerFeedbackResponse } = await axios.post(
+      `${process.env.SPONSOR_SERVER_URL}/freelancer-feedback`,
+      {
+        feedbackAuth: job.freelancer_feedback_auth,
+        jobID,
+      },
+    );
+    console.log("Freelancer feedback response: %O", freelancerFeedbackResponse);
+    res.json({
+      ...response.data,
+      paymentResponse,
+      attestation: {
+        sponsor: sponsorFeedbackResponse.txHash,
+        freelancer: freelancerFeedbackResponse.txHash,
+      },
+    });
   } catch (error) {
     if (error instanceof AxiosError) {
       console.error("Error: %O", error.response?.data);

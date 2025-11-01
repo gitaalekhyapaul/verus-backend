@@ -124,6 +124,7 @@ app.post("/freelancer-feedback", async (req, res) => {
       JSON.stringify({
         job,
         feedback: {
+          recipient: "freelancer",
           txHash,
           score: Math.floor(Math.random() * 25) + 75,
           tag1: "excellent-service",
