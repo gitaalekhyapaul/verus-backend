@@ -1,0 +1,42 @@
+{
+  "name": "validator-agent",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "tsx index.ts",
+    "dev:multi-network-signer": "tsx multi-network-signer.ts",
+    "format": "prettier -c .prettierrc --write \"**/*.{ts,js,cjs,json,md}\"",
+    "format:check": "prettier -c .prettierrc --check \"**/*.{ts,js,cjs,json,md}\"",
+    "lint": "eslint . --ext .ts --fix",
+    "lint:check": "eslint . --ext .ts"
+  },
+  "dependencies": {
+    "@langchain/core": "^1.0.2",
+    "@langchain/groq": "^1.0.0",
+    "axios": "^1.7.9",
+    "dotenv": "^16.5.0",
+    "erc-8004-js": "^0.1.4",
+    "ethers": "~6.15.0",
+    "express": "^4.18.2",
+    "langchain": "^1.0.2",
+    "x402-axios": "workspace:*",
+    "x402-express": "workspace:^",
+    "zod": "^3.24.2"
+  },
+  "devDependencies": {
+    "@a2a-js/sdk": "^0.3.4",
+    "@eslint/js": "^9.24.0",
+    "@hashgraph/sdk": "^2.74.0",
+    "@types/express": "^5.0.1",
+    "@types/node": "^22.13.4",
+    "@typescript-eslint/eslint-plugin": "^8.29.1",
+    "@typescript-eslint/parser": "^8.29.1",
+    "eslint": "^9.24.0",
+    "eslint-plugin-import": "^2.31.0",
+    "eslint-plugin-jsdoc": "^50.6.9",
+    "eslint-plugin-prettier": "^5.2.6",
+    "prettier": "3.5.2",
+    "tsx": "^4.7.0",
+    "typescript": "^5.3.0"
+  }
+}
