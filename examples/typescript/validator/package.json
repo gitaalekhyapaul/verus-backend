@@ -1,5 +1,5 @@
 {
-  "name": "agent-client-example",
+  "name": "validator",
   "version": "0.1.0",
   "scripts": {
     "dev": "NODE_OPTIONS='--max-old-space-size=4096' tsx index.ts",
@@ -15,6 +15,7 @@
   "description": "x402 Payment Protocol",
   "devDependencies": {
     "@eslint/js": "^9.24.0",
+    "@types/express": "^5.0.1",
     "@types/node": "^22.13.4",
     "@typescript-eslint/eslint-plugin": "^8.29.1",
     "@typescript-eslint/parser": "^8.29.1",
@@ -30,10 +31,12 @@
     "@anthropic-ai/sdk": "^0.39.0",
     "@coinbase/agentkit": "^0.5.0",
     "@coinbase/agentkit-langchain": "^0.3.0",
-    "@langchain/core": "^0.3.43",
+    "@langchain/core": "^0.3.8",
+    "@langchain/groq": "^0.0.10",
     "@langchain/langgraph": "^0.2.62",
     "@langchain/openai": "^0.5.2",
-    "dotenv": "^16.4.7",
+    "dotenv": "^16.6.1",
+    "express": "^4.21.2",
     "viem": "^2.26.2",
     "x402-fetch": "workspace:*",
     "zod": "^3.24.2"
