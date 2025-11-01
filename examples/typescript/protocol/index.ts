@@ -3,6 +3,7 @@ import { config } from "dotenv";
 import express, { Request, Response } from "express";
 import { verify, settle } from "x402/facilitator";
 import { ERC8004Service } from "./8004";
+import { HashgraphService } from "./hashgraph";
 import {
   PaymentRequirementsSchema,
   type PaymentRequirements,
@@ -164,7 +165,14 @@ app.post("/settle", async (req: Request, res: Response) => {
 
 app.listen(process.env.PORT || 3000, async () => {
   console.log(`Server listening at http://localhost:${process.env.PORT || 3000}`);
+  const hashgraphService = await HashgraphService.getInstance();
+  const fileID = await hashgraphService.createAgentCard();
+  const fileURI = `hfs://${fileID?.toString() || ""}`;
+  console.log("File URI: %O", fileURI);
+  console.log("Agent card created: %O", fileURI);
   const erc8004Client = await ERC8004Service.getInstance().getClient();
-  const result = await erc8004Client.identity.register();
+  const result = await erc8004Client.identity.registerWithURI(fileURI);
   console.log("Agent registered: %O", result);
+  const agentCard = await hashgraphService.getAgentCard(fileID!);
+  console.log("Agent card: %O", JSON.parse(agentCard));
 });
