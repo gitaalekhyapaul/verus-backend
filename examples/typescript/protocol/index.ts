@@ -166,13 +166,23 @@ app.post("/settle", async (req: Request, res: Response) => {
 app.listen(process.env.PORT || 3000, async () => {
   console.log(`Server listening at http://localhost:${process.env.PORT || 3000}`);
   const hashgraphService = await HashgraphService.getInstance();
-  const fileID = await hashgraphService.createAgentCard();
-  const fileURI = `hfs://${fileID?.toString() || ""}`;
-  console.log("File URI: %O", fileURI);
-  console.log("Agent card created: %O", fileURI);
   const erc8004Client = await ERC8004Service.getInstance().getClient();
-  const result = await erc8004Client.identity.registerWithURI(fileURI);
-  console.log("Agent registered: %O", result);
-  const agentCard = await hashgraphService.getAgentCard(fileID!);
+  let agentID: bigint | undefined;
+  if (process.env.ERC8004_AGENT_ID == null) {
+    // Register agent if not already registered
+    const fileID = await hashgraphService.createAgentCard();
+    const fileURI = `hfs://${fileID?.toString() || ""}`;
+    console.log("File URI: %O", fileURI);
+    console.log("Agent card created: %O", fileURI);
+    const result = await erc8004Client.identity.registerWithURI(fileURI);
+    console.log("Agent registered: %O", result);
+    console.log("Agent ID: %O", result.agentId);
+    agentID = result.agentId;
+  }
+  // Verify agent card exists in the ERC-8004 Identity Registry
+  agentID = agentID || BigInt(process.env.ERC8004_AGENT_ID!);
+  const agentURI = await erc8004Client.identity.getTokenURI(agentID);
+  console.log("Agent URI: %O", agentURI);
+  const agentCard = await hashgraphService.getAgentCard(agentURI.split("//")[1]);
   console.log("Agent card: %O", JSON.parse(agentCard));
 });
