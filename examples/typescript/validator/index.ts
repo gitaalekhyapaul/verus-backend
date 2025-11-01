@@ -3,22 +3,34 @@ import express, { Request, Response } from "express";
 import { ChatGroq } from "@langchain/groq";
 import { PromptTemplate } from "@langchain/core/prompts";
 import { HumanMessage } from "@langchain/core/messages";
+import { z } from "zod";
+
 
 config();
 
 const app = express();
 app.use(express.json());
 
-// ---- Setup LLM ----
+// ---- Define Structured Output Schema ----
+const WordCountSchema = z.object({
+  wordCount: z.number().describe("The total number of words in the essay"),
+});
+
+type WordCount = z.infer<typeof WordCountSchema>;
+
+// ---- Setup LLM with Structured Output ----
 const llm = new ChatGroq({
   model: process.env.GROQ_MODEL || "llama-3.3-70b-versatile",
   temperature: 0,
   apiKey: process.env.GROQ_API_KEY,
+}).withStructuredOutput(WordCountSchema, {
+  method: "json_schema",
+  name: "WordCount",
 });
 
 // ---- Prompt Template ----
 const prompt = new PromptTemplate({
-  template: "Count the number of words in the following essay:\n\n{essay}",
+  template: "Analyze the following essay and return the word count, character count, sentence count, and average words per sentence.\n\nEssay:\n{essay}\n\nReturn the results as a JSON object with the following structure: wordCount (number), characterCount (number), sentenceCount (number), averageWordsPerSentence (number).",
   inputVariables: ["essay"],
 });
 
@@ -33,20 +45,21 @@ app.post("/word-count", async (req: Request, res: Response) => {
   try {
     // 1️⃣ Get the prompt as a string
     const promptValue = await prompt.formatPromptValue({ essay });
-    const promptString = promptValue.toString(); // Extract string from StringPromptValue
+    const promptString = promptValue.toString();
     console.log("🧩 Prompt sent to Groq:\n", promptString);
 
-    // 2️⃣ Send as a HumanMessage array (what ChatGroq expects)
+    // 2️⃣ Invoke LLM with structured output
     const response = await llm.invoke([new HumanMessage(promptString)]);
-    console.log("📨 Full raw Groq response:", JSON.stringify(response, null, 2));
+    console.log("📨 Structured output response:", JSON.stringify(response, null, 2));
 
-    // 3️⃣ Return raw model output
-    res.json({ output: response.content });
-  } catch (err: any) {
-    console.error("🔥 Error invoking Groq LLM:", err);
+    // 3️⃣ Return structured output (already validated by Zod)
+    res.json({ result: response });
+  } catch (err: unknown) {
+    const error = err as Error;
+    console.error("🔥 Error invoking Groq LLM:", error);
     res.status(500).json({
       error: "Failed to process word count",
-      details: err.message,
+      details: error.message,
     });
   }
 });
