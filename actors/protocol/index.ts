@@ -223,6 +223,52 @@ app.post("/submit-job", async (req: Request, res: Response) => {
   }
 });
 
+app.post("/accept-job", async (req: Request, res: Response) => {
+  try {
+    const { jobID, walletAddress, feedbackAuth } = req.body;
+    if (!jobID || !walletAddress || !feedbackAuth) {
+      throw new Error("Missing required fields");
+    }
+    const supabaseService = SupabaseService.getInstance().getClient();
+    const hashgraphService = HashgraphService.getInstance();
+    const { data, error } = await supabaseService.from("jobs").select().eq("id", jobID);
+    if (error) {
+      throw new Error(error.message);
+    }
+    const job = data[0];
+    console.log("Job fetched: %O", job);
+    const { error: updateError } = await supabaseService
+      .from("jobs")
+      .update({
+        status: "accepted",
+        freelancer_address: walletAddress,
+        freelancer_feedback_auth: feedbackAuth,
+      })
+      .eq("id", jobID);
+    if (updateError) {
+      throw new Error(updateError.message);
+    }
+    await hashgraphService.sendMessageToTopic(
+      job.topic_id,
+      JSON.stringify({
+        ...job,
+        status: "accepted",
+        freelancer_address: walletAddress,
+        freelancer_feedback_auth: feedbackAuth,
+      }),
+    );
+    res.json({
+      ...job,
+      status: "accepted",
+      freelancer_address: walletAddress,
+      freelancer_feedback_auth: feedbackAuth,
+    });
+  } catch (error) {
+    console.error("error", error);
+    res.status(400).json({ error: `Invalid request: ${error}` });
+  }
+});
+
 app.listen(process.env.PORT || 3000, async () => {
   console.log(`[Protocol] Server listening at http://localhost:${process.env.PORT || 3000}`);
   const hashgraphService = await HashgraphService.getInstance();

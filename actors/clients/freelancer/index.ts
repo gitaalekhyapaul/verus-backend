@@ -1,22 +1,22 @@
 import axios, { AxiosError } from "axios";
 import { config } from "dotenv";
-import { withPaymentInterceptor, decodeXPaymentResponse, createSigner, type Hex } from "x402-axios";
+import { withPaymentInterceptor, createSigner, type Hex } from "x402-axios";
 import express from "express";
 import { ERC8004Service } from "./8004";
+import { HashgraphService } from "./hashgraph";
 const app = express();
 
 config();
 
 app.use(express.json());
 
-app.post("/submit-job", async (req, res) => {
+app.post("/accept-job", async (req, res) => {
   try {
-    const { description, acceptanceCriteria } = req.body;
-    console.log("Description: %O", description);
-    console.log("Acceptance criteria: %O", acceptanceCriteria);
+    const { jobID } = req.body;
+    console.log("Job ID: %O", jobID);
     const erc8004Client = ERC8004Service.getInstance().getClient();
-    const agentID = BigInt(process.env.FACILITATOR_AGENT_ID!);
-    const clientAddress = process.env.FACILITATOR_CLIENT_ADDRESS!;
+    const agentID = BigInt(process.env.SPONSOR_AGENT_ID!);
+    const clientAddress = process.env.SPONSOR_CLIENT_ADDRESS!;
     const lastIndex = await erc8004Client.reputation.getLastIndex(agentID, clientAddress);
     console.log("Last index: %O", lastIndex);
     const feedbackAuth = await erc8004Client.reputation.createFeedbackAuth(
@@ -39,15 +39,13 @@ app.post("/submit-job", async (req, res) => {
       }),
       signer,
     );
-    const response = await api.post("/submit-job", {
-      description,
-      acceptanceCriteria,
+    const response = await api.post("/accept-job", {
+      jobID,
+      walletAddress: process.env.HEDERA_ACCOUNT_EVM_ADDRESS!,
       feedbackAuth: signedFeedbackAuth,
     });
     console.log(response.data);
-    const paymentResponse = decodeXPaymentResponse(response.headers["x-payment-response"]);
-    console.log(paymentResponse);
-    res.json({ ...response.data, paymentResponse });
+    res.json(response.data);
   } catch (error) {
     if (error instanceof AxiosError) {
       console.error("Error: %O", error.response?.data);
@@ -58,6 +56,26 @@ app.post("/submit-job", async (req, res) => {
   }
 });
 
-app.listen(process.env.PORT || 3000, () => {
-  console.log(`[Sponsor] Server is running on port ${process.env.PORT || 3000}`);
+app.listen(process.env.PORT || 3000, async () => {
+  console.log(`[Freelancer] Server is running on port ${process.env.PORT || 3000}`);
+  const hashgraphService = await HashgraphService.getInstance();
+  const erc8004Client = await ERC8004Service.getInstance().getClient();
+  let agentID: bigint | undefined;
+  if (process.env.ERC8004_AGENT_ID == null) {
+    // Register agent if not already registered
+    const fileID = await hashgraphService.createAgentCard();
+    const fileURI = `hcs://${fileID?.toString() || ""}`;
+    console.log("File URI: %O", fileURI);
+    console.log("Agent card created: %O", fileURI);
+    const result = await erc8004Client.identity.registerWithURI(fileURI);
+    console.log("Agent registered: %O", result);
+    console.log("Agent ID: %O", result.agentId);
+    agentID = result.agentId;
+  }
+  // Verify agent card exists in the ERC-8004 Identity Registry
+  agentID = agentID || BigInt(process.env.ERC8004_AGENT_ID!);
+  const agentURI = await erc8004Client.identity.getTokenURI(agentID);
+  console.log("Agent URI: %O", agentURI);
+  const agentCard = await hashgraphService.getAgentCardFromMessageID(agentURI.split("//")[1]);
+  console.log("Agent card: %O", JSON.parse(agentCard ?? "{}"));
 });
