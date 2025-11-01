@@ -18,7 +18,10 @@ import {
   type X402Config,
   SupportedHederaNetworks,
   isHederaSignerWallet,
+  HederaAddress,
+  Resource,
 } from "x402/types";
+import { paymentMiddleware } from "x402-express";
 
 config();
 
@@ -52,6 +55,28 @@ const app = express();
 // Configure express to parse JSON bodies
 app.use(express.json());
 
+app.use(
+  //@ts-expect-error - paymentMiddleware is not typed
+  paymentMiddleware(
+    process.env.HEDERA_ACCOUNT_EVM_ADDRESS as HederaAddress,
+    {
+      "POST /submit-job": {
+        price: {
+          amount: "1",
+          asset: {
+            address: "0.0.7171672",
+            decimals: 0,
+          },
+        },
+        network: "hedera-testnet",
+      },
+    },
+    {
+      url: process.env.FACILITATOR_URL as Resource,
+    },
+  ),
+);
+
 type VerifyRequest = {
   paymentPayload: PaymentPayload;
   paymentRequirements: PaymentRequirements;
@@ -75,9 +100,12 @@ app.get("/verify", (req: Request, res: Response) => {
 
 app.post("/verify", async (req: Request, res: Response) => {
   try {
+    console.log("Verify request: %O", req.body);
     const body: VerifyRequest = req.body;
     const paymentRequirements = PaymentRequirementsSchema.parse(body.paymentRequirements);
     const paymentPayload = PaymentPayloadSchema.parse(body.paymentPayload);
+    console.log("[verify] Payment requirements: %O", paymentRequirements);
+    console.log("[verify] Payment payload: %O", paymentPayload);
     // use the correct client/signer based on the requested network
     // svm verify requires a Signer because it signs & simulates the txn
     // hedera verify requires a Signer because it verifies the txn
@@ -92,6 +120,7 @@ app.post("/verify", async (req: Request, res: Response) => {
 
     // verify
     const valid = await verify(client, paymentPayload, paymentRequirements, x402Config);
+    console.log("Valid: %O", valid);
     res.json(valid);
   } catch (error) {
     console.error("error", error);
@@ -137,16 +166,14 @@ app.get("/supported", async (req: Request, res: Response) => {
 app.post("/settle", async (req: Request, res: Response) => {
   try {
     const body: SettleRequest = req.body;
+    console.log("[settle] Request: %O", body);
     const paymentRequirements = PaymentRequirementsSchema.parse(body.paymentRequirements);
     const paymentPayload = PaymentPayloadSchema.parse(body.paymentPayload);
-
+    console.log("[settle] Payment requirements: %O", paymentRequirements);
+    console.log("[settle] Payment payload: %O", paymentPayload);
     // use the correct private key based on the requested network
     let signer: Signer;
-    if (SupportedEVMNetworks.includes(paymentRequirements.network)) {
-      signer = await createSigner(paymentRequirements.network, EVM_PRIVATE_KEY);
-    } else if (SupportedSVMNetworks.includes(paymentRequirements.network)) {
-      signer = await createSigner(paymentRequirements.network, SVM_PRIVATE_KEY);
-    } else if (SupportedHederaNetworks.includes(paymentRequirements.network)) {
+    if (SupportedHederaNetworks.includes(paymentRequirements.network)) {
       signer = await createSigner(paymentRequirements.network, HEDERA_PRIVATE_KEY, {
         accountId: HEDERA_ACCOUNT_ID,
       });
@@ -163,8 +190,26 @@ app.post("/settle", async (req: Request, res: Response) => {
   }
 });
 
+app.post("/submit-job", async (req: Request, res: Response) => {
+  try {
+    const { description, acceptanceCriteria, feedbackAuth } = req.body;
+    if (!description || !acceptanceCriteria || !feedbackAuth) {
+      throw new Error("Missing required fields");
+    }
+    const job = {
+      description,
+      acceptanceCriteria,
+      feedbackAuth,
+    };
+    res.json(job);
+  } catch (error) {
+    console.error("error", error);
+    res.status(400).json({ error: `Invalid request: ${error}` });
+  }
+});
+
 app.listen(process.env.PORT || 3000, async () => {
-  console.log(`Server listening at http://localhost:${process.env.PORT || 3000}`);
+  console.log(`[Protocol] Server listening at http://localhost:${process.env.PORT || 3000}`);
   const hashgraphService = await HashgraphService.getInstance();
   const erc8004Client = await ERC8004Service.getInstance().getClient();
   let agentID: bigint | undefined;

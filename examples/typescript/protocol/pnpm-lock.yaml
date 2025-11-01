@@ -23,6 +23,9 @@ importers:
       x402:
         specifier: workspace:*
         version: link:../../../typescript/packages/x402
+      x402-express:
+        specifier: workspace:^
+        version: link:../../../typescript/packages/x402-express
     devDependencies:
       '@types/express':
         specifier: ^5.0.1
