@@ -1,0 +1,5 @@
+packages:
+  - "clients/*"
+  - "agent"
+  - "protocol"
+  - "../typescript/packages/*"
