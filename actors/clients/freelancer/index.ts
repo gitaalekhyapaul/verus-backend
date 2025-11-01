@@ -1,9 +1,10 @@
 import axios, { AxiosError } from "axios";
 import { config } from "dotenv";
-import { withPaymentInterceptor, createSigner, type Hex } from "x402-axios";
+import { withPaymentInterceptor, createSigner, type Hex, decodeXPaymentResponse } from "x402-axios";
 import express from "express";
 import { ERC8004Service } from "./8004";
 import { HashgraphService } from "./hashgraph";
+import { SupabaseService } from "./supabase";
 const app = express();
 
 config();
@@ -43,6 +44,36 @@ app.post("/accept-job", async (req, res) => {
       jobID,
       walletAddress: process.env.HEDERA_ACCOUNT_EVM_ADDRESS!,
       feedbackAuth: signedFeedbackAuth,
+    });
+    console.log(response.data);
+    res.json(response.data);
+  } catch (error) {
+    if (error instanceof AxiosError) {
+      console.error("Error: %O", error.response?.data);
+      return res.status(error.response?.status || 500).json({ error: error.response?.data });
+    }
+    console.error("Error: %O", error);
+    res.status(500).json({ error: "Internal server error" });
+  }
+});
+
+app.post("/deliver-job", async (req, res) => {
+  try {
+    const { jobID, artifact } = req.body;
+    console.log("Job ID: %O", jobID);
+    console.log("Artifact: %O", artifact);
+    const privateKey = process.env.HEDERA_PRIVATE_KEY as Hex | string;
+    const hederaAccountId = process.env.HEDERA_ACCOUNT_ID as string;
+    const signer = await createSigner("hedera-testnet", privateKey, { accountId: hederaAccountId });
+    const api = withPaymentInterceptor(
+      axios.create({
+        baseURL: process.env.FACILITATOR_SERVER_URL as string,
+      }),
+      signer,
+    );
+    const response = await api.post("/deliver-job", {
+      jobID,
+      artifact,
     });
     console.log(response.data);
     res.json(response.data);

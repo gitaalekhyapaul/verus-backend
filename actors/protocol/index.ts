@@ -5,6 +5,8 @@ import { verify, settle } from "x402/facilitator";
 import { ERC8004Service } from "./8004";
 import { HashgraphService } from "./hashgraph";
 import { SupabaseService } from "./supabase";
+import axios, { AxiosError } from "axios";
+import { decodeXPaymentResponse, Hex, withPaymentInterceptor } from "x402-axios";
 import {
   PaymentRequirementsSchema,
   type PaymentRequirements,
@@ -266,6 +268,69 @@ app.post("/accept-job", async (req: Request, res: Response) => {
   } catch (error) {
     console.error("error", error);
     res.status(400).json({ error: `Invalid request: ${error}` });
+  }
+});
+
+app.post("/deliver-job", async (req, res) => {
+  try {
+    const { artifact, jobID } = req.body;
+    console.log("Artifact: %O", artifact);
+    console.log("Job ID: %O", jobID);
+    const privateKey = process.env.HEDERA_PRIVATE_KEY as Hex | string;
+    const hederaAccountId = process.env.HEDERA_ACCOUNT_ID as string;
+    const signer = await createSigner("hedera-testnet", privateKey, { accountId: hederaAccountId });
+    const api = withPaymentInterceptor(
+      axios.create({
+        baseURL: process.env.VALIDATOR_SERVER_URL as string,
+      }),
+      signer,
+    );
+    const supabaseService = SupabaseService.getInstance().getClient();
+    const hashgraphService = HashgraphService.getInstance();
+    const { data, error } = await supabaseService.from("jobs").select().eq("id", jobID);
+    if (error) {
+      throw new Error(error.message);
+    }
+    const job = data[0];
+    console.log("Job: %O", job);
+
+    const response = await api.post("/verify-job", {
+      jobID,
+      artifact,
+      acceptanceCriteria: job.acceptance_criteria,
+    });
+    const paymentResponse = decodeXPaymentResponse(response.headers["x-payment-response"]);
+    console.log("Payment response: %O", paymentResponse);
+    console.log(response.data);
+    if (response.data.success) {
+      const { error: updateError } = await supabaseService
+        .from("jobs")
+        .update({
+          status: "completed",
+        })
+        .eq("id", jobID);
+      if (updateError) {
+        throw new Error(updateError.message);
+      }
+      await hashgraphService.sendMessageToTopic(
+        job.topic_id,
+        JSON.stringify({
+          job: {
+            ...job,
+            status: "completed",
+          },
+          paymentResponse,
+        }),
+      );
+    }
+    res.json({ ...response.data, paymentResponse });
+  } catch (error) {
+    if (error instanceof AxiosError) {
+      console.error("Error: %O", error.response?.data);
+      return res.status(error.response?.status || 500).json({ error: error.response?.data });
+    }
+    console.error("Error: %O", error);
+    res.status(500).json({ error: "Internal server error" });
   }
 });
 
