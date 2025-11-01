@@ -450,49 +450,6 @@ importers:
         specifier: ^5.7.3
         version: 5.9.2
 
-  clients/axios:
-    dependencies:
-      axios:
-        specifier: ^1.7.9
-        version: 1.11.0
-      dotenv:
-        specifier: ^16.5.0
-        version: 16.6.1
-      x402-axios:
-        specifier: workspace:*
-        version: link:../../../../typescript/packages/x402-axios
-    devDependencies:
-      '@eslint/js':
-        specifier: ^9.24.0
-        version: 9.33.0
-      '@typescript-eslint/eslint-plugin':
-        specifier: ^8.29.1
-        version: 8.40.0(@typescript-eslint/parser@8.40.0(eslint@9.33.0(jiti@1.21.7))(typescript@5.9.2))(eslint@9.33.0(jiti@1.21.7))(typescript@5.9.2)
-      '@typescript-eslint/parser':
-        specifier: ^8.29.1
-        version: 8.40.0(eslint@9.33.0(jiti@1.21.7))(typescript@5.9.2)
-      eslint:
-        specifier: ^9.24.0
-        version: 9.33.0(jiti@1.21.7)
-      eslint-plugin-import:
-        specifier: ^2.31.0
-        version: 2.32.0(@typescript-eslint/parser@8.40.0(eslint@9.33.0(jiti@1.21.7))(typescript@5.9.2))(eslint@9.33.0(jiti@1.21.7))
-      eslint-plugin-jsdoc:
-        specifier: ^50.6.9
-        version: 50.8.0(eslint@9.33.0(jiti@1.21.7))
-      eslint-plugin-prettier:
-        specifier: ^5.2.6
-        version: 5.5.4(eslint-config-prettier@10.1.8(eslint@9.33.0(jiti@1.21.7)))(eslint@9.33.0(jiti@1.21.7))(prettier@3.5.2)
-      prettier:
-        specifier: 3.5.2
-        version: 3.5.2
-      tsx:
-        specifier: ^4.7.0
-        version: 4.20.4
-      typescript:
-        specifier: ^5.3.0
-        version: 5.9.2
-
   clients/fetch:
     dependencies:
       dotenv:
@@ -533,21 +490,36 @@ importers:
         specifier: ^5.3.0
         version: 5.9.2
 
-  facilitator:
+  clients/sponsor:
     dependencies:
+      axios:
+        specifier: ^1.7.9
+        version: 1.11.0
       dotenv:
-        specifier: ^16.4.7
+        specifier: ^16.5.0
         version: 16.6.1
+      erc-8004-js:
+        specifier: ^0.1.4
+        version: 0.1.4(ethers@6.15.0(bufferutil@4.0.9)(utf-8-validate@5.0.10))(viem@2.34.0(bufferutil@4.0.9)(typescript@5.9.2)(utf-8-validate@5.0.10)(zod@3.25.76))
+      ethers:
+        specifier: ~6.15.0
+        version: 6.15.0(bufferutil@4.0.9)(utf-8-validate@5.0.10)
       express:
         specifier: ^4.18.2
         version: 4.21.2
-      x402:
+      x402-axios:
         specifier: workspace:*
-        version: link:../../../typescript/packages/x402
+        version: link:../../../../typescript/packages/x402-axios
+      x402-express:
+        specifier: workspace:^
+        version: link:../../../../typescript/packages/x402-express
     devDependencies:
       '@eslint/js':
         specifier: ^9.24.0
         version: 9.33.0
+      '@types/express':
+        specifier: ^5.0.1
+        version: 5.0.3
       '@typescript-eslint/eslint-plugin':
         specifier: ^8.29.1
         version: 8.40.0(@typescript-eslint/parser@8.40.0(eslint@9.33.0(jiti@1.21.7))(typescript@5.9.2))(eslint@9.33.0(jiti@1.21.7))(typescript@5.9.2)
@@ -2414,9 +2386,6 @@ packages:
   '@types/node@18.19.123':
     resolution: {integrity: sha512-K7DIaHnh0mzVxreCR9qwgNxp3MH9dltPNIEddW9MYUlcKAzm+3grKNSTe2vCJHI1FaLpvpL5JGJrz1UZDKYvDg==}
 
-  '@types/node@20.19.11':
-    resolution: {integrity: sha512-uug3FEEGv0r+jrecvUUpbY8lLisvIjg6AAic6a2bSP5OEOLeJsDSnvhCDov7ipFFMXS3orMpzlmi0ZcuGkBbow==}
-
   '@types/node@22.17.2':
     resolution: {integrity: sha512-gL6z5N9Jm9mhY+U2KXZpteb+09zyffliRkZyZOHODGATyC5B1Jt/7TzuuiLkFsSUMLbS1OLmlj/E+/3KF4Q/4w==}
 
@@ -3349,6 +3318,10 @@ packages:
     resolution: {integrity: sha512-uBq4egWHTcTt33a72vpSG0z3HnPuIl6NqYcTrKEg2azoEyl2hpW0zqlxysq2pK9HlDIHyHyakeYaYnSAwd8bow==}
     engines: {node: '>=12'}
 
+  dotenv@17.2.3:
+    resolution: {integrity: sha512-JVUnt+DUIzu87TABbhPmNfVdBDt18BLOWjMUFJMSi/Qqg7NTYtabbvSNJGOJ7afbRuv9D/lngizHtP7QyLQ+9w==}
+    engines: {node: '>=12'}
+
   dunder-proto@1.0.1:
     resolution: {integrity: sha512-KIN/nDJBQRcXw0MLVhZE9iQHmG68qAVIBg9CqmUYjmQIhgij9U5MFvrqkUL5FbtyyzZuOeOt0zdeRe4UY7ct+A==}
     engines: {node: '>= 0.4'}
@@ -3408,6 +3381,17 @@ packages:
   entities@6.0.1:
     resolution: {integrity: sha512-aN97NXWF6AWBTahfVOIrB/NShkzi5H7F9r1s9mD3cDj4Ko5f2qhhVoYMibXF7GlLveb/D2ioWay8lxI97Ven3g==}
     engines: {node: '>=0.12'}
+
+  erc-8004-js@0.1.4:
+    resolution: {integrity: sha512-if8gBLmqXuYRc87rrzeCnpP083+qcZSaeELeqGLX7Qx0JbdURwzcKQprVeNXPSndOMWn3OLyhLLKFYAzkkwcuQ==}
+    peerDependencies:
+      ethers: ^6.0.0
+      viem: ^2.0.0
+    peerDependenciesMeta:
+      ethers:
+        optional: true
+      viem:
+        optional: true
 
   error-stack-parser@2.1.4:
     resolution: {integrity: sha512-Sk5V6wVazPhq5MhpO+AUxJn5x7XSXGl1R93Vn7i+zS15KDVxQijejNCrz8340/2bgLBjR9GtEG8ZVKONDjcqGQ==}
@@ -4606,6 +4590,9 @@ packages:
 
   ms@2.1.3:
     resolution: {integrity: sha512-6FlzubTLZG3J2a/NVCAleEhjzq5oxgHyaCU9yYXvcLsvoVaHJq/s5xXI6/XXP6tz7R9xAOtHnSO/tXtF3WRTlA==}
+
+  multiformats@13.4.1:
+    resolution: {integrity: sha512-VqO6OSvLrFVAYYjgsr8tyv62/rCQhPgsZUXLTqoFLSgdkgiUYKYeArbt1uWLlEpkjxQe+P0+sHlbPEte1Bi06Q==}
 
   multiformats@9.9.0:
     resolution: {integrity: sha512-HoMUjhH9T8DDBNT+6xzkrd9ga/XiBI4xLr58LJACwK6G3HTOPeMz4nB4KJs33L2BelrIJa7P0VuNaVF3hMYfjg==}
@@ -8187,7 +8174,7 @@ snapshots:
 
   '@scure/bip32@1.7.0':
     dependencies:
-      '@noble/curves': 1.9.6
+      '@noble/curves': 1.9.7
       '@noble/hashes': 1.8.0
       '@scure/base': 1.2.6
 
@@ -8870,7 +8857,7 @@ snapshots:
 
   '@types/node-fetch@2.6.13':
     dependencies:
-      '@types/node': 20.19.11
+      '@types/node': 22.17.2
       form-data: 4.0.4
 
   '@types/node@12.20.55': {}
@@ -8878,10 +8865,6 @@ snapshots:
   '@types/node@18.19.123':
     dependencies:
       undici-types: 5.26.5
-
-  '@types/node@20.19.11':
-    dependencies:
-      undici-types: 6.21.0
 
   '@types/node@22.17.2':
     dependencies:
@@ -10409,6 +10392,8 @@ snapshots:
 
   dotenv@16.6.1: {}
 
+  dotenv@17.2.3: {}
+
   dunder-proto@1.0.1:
     dependencies:
       call-bind-apply-helpers: 1.0.2
@@ -10483,6 +10468,14 @@ snapshots:
   engine.io-parser@5.2.3: {}
 
   entities@6.0.1: {}
+
+  erc-8004-js@0.1.4(ethers@6.15.0(bufferutil@4.0.9)(utf-8-validate@5.0.10))(viem@2.34.0(bufferutil@4.0.9)(typescript@5.9.2)(utf-8-validate@5.0.10)(zod@3.25.76)):
+    dependencies:
+      dotenv: 17.2.3
+      multiformats: 13.4.1
+    optionalDependencies:
+      ethers: 6.15.0(bufferutil@4.0.9)(utf-8-validate@5.0.10)
+      viem: 2.34.0(bufferutil@4.0.9)(typescript@5.9.2)(utf-8-validate@5.0.10)(zod@3.25.76)
 
   error-stack-parser@2.1.4:
     dependencies:
@@ -12022,6 +12015,8 @@ snapshots:
 
   ms@2.1.3: {}
 
+  multiformats@13.4.1: {}
+
   multiformats@9.9.0: {}
 
   mustache@4.2.0: {}
@@ -12191,7 +12186,7 @@ snapshots:
   ox@0.6.7(typescript@5.9.2)(zod@3.25.76):
     dependencies:
       '@adraffy/ens-normalize': 1.11.0
-      '@noble/curves': 1.8.1
+      '@noble/curves': 1.9.7
       '@noble/hashes': 1.8.0
       '@scure/bip32': 1.6.2
       '@scure/bip39': 1.5.4
@@ -12220,7 +12215,7 @@ snapshots:
     dependencies:
       '@adraffy/ens-normalize': 1.11.0
       '@noble/ciphers': 1.3.0
-      '@noble/curves': 1.9.6
+      '@noble/curves': 1.9.7
       '@noble/hashes': 1.8.0
       '@scure/bip32': 1.7.0
       '@scure/bip39': 1.6.0
@@ -12235,7 +12230,7 @@ snapshots:
     dependencies:
       '@adraffy/ens-normalize': 1.11.0
       '@noble/ciphers': 1.3.0
-      '@noble/curves': 1.9.6
+      '@noble/curves': 1.9.7
       '@noble/hashes': 1.8.0
       '@scure/bip32': 1.7.0
       '@scure/bip39': 1.6.0
