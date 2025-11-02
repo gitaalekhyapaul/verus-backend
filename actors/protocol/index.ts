@@ -23,6 +23,7 @@ import {
   Resource,
 } from "x402/types";
 import { paymentMiddleware } from "x402-express";
+import cors from "cors";
 
 config();
 
@@ -55,6 +56,7 @@ const app = express();
 
 // Configure express to parse JSON bodies
 app.use(express.json());
+app.use(cors());
 
 app.use(
   //@ts-expect-error - paymentMiddleware is not typed

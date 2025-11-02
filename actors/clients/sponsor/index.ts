@@ -5,11 +5,14 @@ import express from "express";
 import { ERC8004Service } from "./8004";
 import { HashgraphService } from "./hashgraph";
 import { SupabaseService } from "./supabase";
+import cors from "cors";
+
 const app = express();
 
 config();
 
 app.use(express.json());
+app.use(cors());
 
 app.post("/submit-job", async (req, res) => {
   try {

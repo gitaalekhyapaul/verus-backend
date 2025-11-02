@@ -15,6 +15,7 @@
     "@hashgraph/sdk": "^2.74.0",
     "@supabase/supabase-js": "^2.78.0",
     "axios": "^1.7.9",
+    "cors": "^2.8.5",
     "dotenv": "^16.4.7",
     "erc-8004-js": "^0.1.4",
     "ethers": "~6.15.0",

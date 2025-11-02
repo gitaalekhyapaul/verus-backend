@@ -7,12 +7,14 @@ import { paymentMiddleware, Resource, HederaAddress } from "x402-express";
 import { ChatGroq } from "@langchain/groq";
 import { tool, createAgent } from "langchain";
 import { z } from "zod";
+import cors from "cors";
 
 const app = express();
 
 config();
 
 app.use(express.json());
+app.use(cors());
 
 app.use(
   //@ts-expect-error - paymentMiddleware is not typed
